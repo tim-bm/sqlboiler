@@ -100,6 +100,18 @@ func TestBuildQuery(t *testing.T) {
 		{&Query{from: []string{"cats c"}, joins: []join{{JoinInner, "dogs d on d.cat_id = cats.id", nil}}}, nil},
 		{&Query{from: []string{"cats as c"}, joins: []join{{JoinInner, "dogs d on d.cat_id = cats.id", nil}}}, nil},
 		{&Query{from: []string{"cats as c", "dogs as d"}, joins: []join{{JoinInner, "dogs d on d.cat_id = cats.id", nil}}}, nil},
+		{&Query{from: []string{"cats"}, joins: []join{{JoinOuterLeft, "dogs d on d.cat_id = cats.id", nil}}}, nil},
+		{&Query{from: []string{"cats c"}, joins: []join{{JoinOuterLeft, "dogs d on d.cat_id = cats.id", nil}}}, nil},
+		{&Query{from: []string{"cats as c"}, joins: []join{{JoinOuterLeft, "dogs d on d.cat_id = cats.id", nil}}}, nil},
+		{&Query{from: []string{"cats as c", "dogs as d"}, joins: []join{{JoinOuterLeft, "dogs d on d.cat_id = cats.id", nil}}}, nil},
+		{&Query{from: []string{"cats"}, joins: []join{{JoinOuterRight, "dogs d on d.cat_id = cats.id", nil}}}, nil},
+		{&Query{from: []string{"cats c"}, joins: []join{{JoinOuterRight, "dogs d on d.cat_id = cats.id", nil}}}, nil},
+		{&Query{from: []string{"cats as c"}, joins: []join{{JoinOuterRight, "dogs d on d.cat_id = cats.id", nil}}}, nil},
+		{&Query{from: []string{"cats as c", "dogs as d"}, joins: []join{{JoinOuterRight, "dogs d on d.cat_id = cats.id", nil}}}, nil},
+		{&Query{from: []string{"cats"}, joins: []join{{JoinOuterFull, "dogs d on d.cat_id = cats.id", nil}}}, nil},
+		{&Query{from: []string{"cats c"}, joins: []join{{JoinOuterFull, "dogs d on d.cat_id = cats.id", nil}}}, nil},
+		{&Query{from: []string{"cats as c"}, joins: []join{{JoinOuterFull, "dogs d on d.cat_id = cats.id", nil}}}, nil},
+		{&Query{from: []string{"cats as c", "dogs as d"}, joins: []join{{JoinOuterFull, "dogs d on d.cat_id = cats.id", nil}}}, nil},
 		{&Query{
 			from: []string{"t"},
 			withs: []argClause{
@@ -324,8 +336,19 @@ func TestInClause(t *testing.T) {
 			q: Query{
 				where: []where{{kind: whereKindIn, clause: "a in ?", args: []interface{}{}, orSeparator: true}},
 			},
-			expect: ` WHERE ("a" IN ())`,
+			expect: ` WHERE (1=0)`,
 		},
+		{
+			q: Query{
+				where: []where{
+					where{kind: whereKindIn, clause: "a in ?", args: []interface{}{}, orSeparator: true},
+					where{kind: whereKindIn, clause: "a in ?", args: []interface{}{1}, orSeparator: true},
+				},
+			},
+			expect: ` WHERE (1=0) OR ("a" IN ($1))`,
+			args:   []interface{}{1},
+		},
+
 		{
 			q: Query{
 				where: []where{{kind: whereKindIn, clause: "a in ?", args: []interface{}{1}, orSeparator: true}},

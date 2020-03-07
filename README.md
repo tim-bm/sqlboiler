@@ -324,6 +324,7 @@ not to pass them through the command line or environment variables:
 | no-auto-timestamps  | false     |
 | no-rows-affected    | false     |
 | no-driver-templates | false     |
+| tag-ignore          | []        |
 
 Example:
 
@@ -801,6 +802,12 @@ The most common causes of problems and panics are:
     global database handle using `boil.SetDB()`.
 - Naming collisions, if the code fails to compile because there are naming collisions, look at the
   [aliasing](#aliases) feature.
+- Race conditions in tests or when using global variable models and using
+  relationship set helpers in multiple goroutines. Note that Set/Add/Remove
+  relationship helpers modify their input parameters to maintain parity between
+  the `.R` struct relationships and the database foreign keys but this can
+  produce subtle race conditions. Test for this using the `-race` flag on the
+  go tool.
 - A field not being inserted (usually a default true boolean), `boil.Infer` looks at the zero
   value of your Go type (it doesn't care what the default value in the database is) to determine
   if it should insert your field or not. In the case of a default true boolean value, when you
@@ -921,9 +928,13 @@ Note: You can set the timezone for this feature by calling `boil.SetLocation()`
 
 #### Skipping Automatic Timestamps
 
-If for a given query you do not want timestamp columns to be updated
-then you can use `boil.SkipTimestamps` on the context you pass in to the query
-to prevent them from being updated.
+If for a given query you do not want timestamp columns to be re-computed prior
+to an insert or update then you can use `boil.SkipTimestamps` on the context you
+pass in to the query to prevent them from being updated.
+
+Keep in mind this has no effect on whether or not the column is included in the
+insert/update, it simply stops them from being set to `time.Now()` in the struct
+before being sent to the database (if they were going to be sent).
 
 #### Overriding Automatic Timestamps
 
@@ -1500,7 +1511,7 @@ err := p1.Insert(ctx, db, boil.Infer()) // Insert the first pilot with name "Lar
 // p1 now has an ID field set to 1
 
 var p2 models.Pilot
-p2.Name "Boris"
+p2.Name = "Boris"
 err := p2.Insert(ctx, db, boil.Infer()) // Insert the second pilot with name "Boris"
 // p2 now has an ID field set to 2
 

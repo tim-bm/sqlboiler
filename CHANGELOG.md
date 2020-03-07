@@ -7,12 +7,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Add a whitelist of table.column names to set "-" struct tags for to ignore
+  them during serialization (thanks @bogdanpradnj)
 - Add 'where in' helpers for all primitive Go types (thanks @nwidger)
 - Add a usage example of accessing the .R field (thanks @tooolbox)
+- Add a check that safely sidesteps empty WhereIn queries like in other ORMs.
+  (thanks @rekki)
+- Add LeftOuter/RightOuter/FullOuter join query mods. Keep in mind this has no
+  direct Bind() support as of yet so as with inner joins you -must- use custom
+  data structs. (thanks @tzachshabtay)
 
 ### Fixed
 
 - Fix an idempotency issue with primary key column ordering
+- Fix the plural/singular helpers for the word schema (thanks @Mushus)
+- Fix some panics in Remove relationship set operations
+- Fix panic when using WhereNullEQ with NullDecimal: implemented
+  qmhelper.Nullable for NullDecimal
 
 ## [v3.6.1] - 2019-11-08
 
